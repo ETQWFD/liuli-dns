@@ -43,7 +43,7 @@ for pat in "${PATTERNS[@]}"; do
 done
 
 ENV_FILES="$(find . -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.pfx' -o -name '*.p12' \) \
-  -not -path './.venv/*' -not -path './.git/*' -not -path './data/*' -not -path './docs/screenshots/*' 2>/dev/null || true)"
+  -not -path './.venv/*' -not -path './.git/*' -not -path './data/*' -not -path './docs/screenshots/*' -not -path './build-tools/*' -not -path './release/*' -not -path './dist/*' 2>/dev/null || true)"
 if [ -n "$ENV_FILES" ]; then
   HITS+="[files that must never be committed]"$'\n'"$ENV_FILES"$'\n'
 fi
