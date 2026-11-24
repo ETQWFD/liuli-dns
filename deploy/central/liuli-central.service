@@ -1,0 +1,22 @@
+[Unit]
+Description=LiuliDNS central control plane
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=liuli
+Group=liuli
+WorkingDirectory=/opt/liuli-dns
+EnvironmentFile=/opt/liuli-dns/deploy/central/central.env
+ExecStart=/opt/liuli-dns/.venv/bin/python /opt/liuli-dns/central_entry.py
+Restart=always
+RestartSec=4
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/liuli-dns
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

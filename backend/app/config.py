@@ -26,12 +26,18 @@ class Settings(BaseSettings):
 
     app_env: Literal["dev", "test", "prod"] = "dev"
     app_name: str = "LiuliDNS"
-    app_version: str = "0.2.0"
+    app_version: str = "0.2.1"
     api_prefix: str = "/api/v1"
     # Standalone desktop mode: the client starts this API locally. It keeps
     # mail optional for a one-person install, but it MUST NOT bypass real-name
     # review or activation. Public servers never enable this implicitly.
     local_mode: bool = False
+    # "standalone": one machine runs API + cloudflared.
+    # "control": central account/admin/DNS control plane; each desktop runs
+    #            its own Go tunnel agent with the token issued here.
+    server_role: Literal["standalone", "control"] = "standalone"
+    auto_verify_email: bool = False
+    agent_stale_seconds: int = 120
     # Platform-owned apex used for free second-level names. This is a public
     # identifier, not a secret. The matching zone must exist in Cloudflare.
     platform_domain: str = "asnia.cc"
@@ -84,11 +90,12 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "no-reply@liuli.example"
     smtp_starttls: bool = True
-    realname_inbox: str = "realname@liuli.example"
+    realname_inbox: str = "2416444244@qq.com"
     mail_outbox_dir: str = "./data/outbox"
 
     # --- admin (separate from user accounts) ---
-    admin_email: str = ""
+    admin_email: str = "2416444244@qq.com"
+    admin_public_url: str = "http://127.0.0.1:8000/admin"
     admin_password_hash: str = ""  # argon2id string generated offline
     admin_totp_secret: str = ""    # base32
     admin_session_ttl_seconds: int = 8 * 3600

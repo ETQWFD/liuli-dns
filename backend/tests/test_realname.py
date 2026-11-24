@@ -168,5 +168,23 @@ def test_status_contains_guidance_and_no_pii(client):
     r = client.get("/api/v1/realname/status", headers=bearer(tokens))
     data = r.json()["data"]
     assert data["status"] == "unverified"
-    assert "平台人工审核" in " ".join(data["instructions"])
+    assert data["user_no"].startswith("U-")
+    joined = " ".join(data["instructions"])
+    assert "管理员人工审核" in joined
+    assert "1～5 个工作日" in joined
+    assert "2416444244@qq.com" in joined
     assert "110101" not in r.text
+
+
+def test_approved_resubmit_does_not_reset_status(client, db):
+    tokens, uid = make_user(client, "approvedresubmit@example.com")
+    with get_sessionmaker()() as s:
+        u = s.get(User, uid)
+        u.realname_status = "approved"
+        s.commit()
+    r = client.post("/api/v1/realname/submissions", json={"doc_type": "id_card"},
+                    headers=bearer(tokens))
+    assert r.status_code == 200, r.text
+    assert r.json()["data"]["status"] == "approved"
+    with get_sessionmaker()() as s:
+        assert s.get(User, uid).realname_status == "approved"

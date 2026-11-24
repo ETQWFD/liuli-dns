@@ -126,6 +126,8 @@ curl -X POST https://api.example.com/api/v1/domains/12/records/batch \
 | DELETE | `/domains/{id}/certificates/{cid}` | Bearer+实名 | 删除密文与元数据 |
 | POST | `/domains/{id}/certificates/acme/order` | Bearer+实名 | 当前返回 `501 CERT_NOT_CONFIGURED` + 手动 DNS-01 指引 |
 | GET | `/certificates/expiring?days=45` | Bearer+邮箱验证 | 到期清单 |
+| GET | `/domains/agent/config` | Bearer+实名活化 | 只返回该用户自己的 Tunnel token、代理端口、域名映射；绝不下发 Cloudflare API Token |
+| POST | `/domains/agent/heartbeat` | Bearer+实名活化 | 桌面 Go agent 上报 running/连接数/域名数/版本/错误；控制面据此显示真实状态 |
 
 上传示例：
 
@@ -152,7 +154,9 @@ curl -X POST https://api.example.com/api/v1/domains/12/certificates \
 - `/admin/2fa`：POST TOTP；失败限次；会话 Cookie。
 - `/admin/dashboard`、`/admin/audit`、`/admin/codes`。
 - `POST /admin/realname/{sub_id}/review`：通过/驳回。
-- `POST /admin/codes`：按 `user_no` 生成激活码（明文只显示一次）。
+- `GET /admin/users?q=&status=`：按邮箱或用户编号搜索用户，显示未使用激活码和待审记录。
+- `POST /admin/users/{user_id}/approve-offline`：管理员核对审核邮箱中的身份证正反面和编号后，手工标记审核通过；该接口绝不自动实名。
+- `POST /admin/codes`：按 `user_no` 生成激活码（同一用户已有未使用码时拒绝重复生成；明文只显示一次）。
 - `POST /admin/codes/{id}/revoke`、`/reset-attempts`。
 
 后台操作写审计；生产建议额外做 IP 白名单与独立域名。后台不返回用户私钥。

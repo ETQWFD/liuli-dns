@@ -30,7 +30,7 @@ packaging/build_macos.sh
 
 ## Windows Authenticode
 
-使用外部购买的 OV/EV 代码签名证书，通过 `packaging/sign.ps1 -Thumbprint <证书指纹>` 签名 `LiuliDNS-Setup-0.2.0.exe`。私钥不随软件分发、不进入仓库、不交给 AI。没有可信证书时安装器仍是“未知发布者”，SmartScreen 可能拦截。
+使用外部购买的 OV/EV 代码签名证书，通过 `packaging/sign.ps1 -Thumbprint <证书指纹>` 签名 `LiuliDNS-Setup-0.2.1.exe`。私钥不随软件分发、不进入仓库、不交给 AI。没有可信证书时安装器仍是“未知发布者”，SmartScreen 可能拦截。
 
 ## Linux
 

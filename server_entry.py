@@ -70,7 +70,8 @@ def _ensure_local_admin(data: Path, secrets_data: dict) -> None:
         (data / "secrets.json").write_text(json.dumps(secrets_data, indent=2), encoding="utf-8")
         cred_path.write_text(
             "LiuliDNS local operator console\n"
-            "URL: http://127.0.0.1:" + os.environ.get("LIULI_LOCAL_PORT", "8000") + "/admin\n"
+            "URL: " + os.environ.get("LIULI_ADMIN_PUBLIC_URL",
+                "http://127.0.0.1:" + os.environ.get("LIULI_LOCAL_PORT", "8000") + "/admin") + "\n"
             f"Password: {password}\n"
             f"TOTP secret (base32): {totp_secret}\n"
             "This account reviews real-name submissions and issues activation codes.\n",
@@ -107,7 +108,9 @@ def main() -> None:
     os.environ["LIULI_DOC_PEPPER"] = secrets_data["doc_pepper"]
     os.environ["LIULI_DATABASE_URL"] = "sqlite:///" + (data / "liuli.db").as_posix()
     os.environ["LIULI_MAIL_OUTBOX_DIR"] = str(outbox)
-    os.environ["LIULI_REALNAME_INBOX"] = "local-realname@liuli.local"
+    os.environ.setdefault("LIULI_REALNAME_INBOX", "2416444244@qq.com")
+    os.environ.setdefault("LIULI_ADMIN_PUBLIC_URL",
+                          f"http://127.0.0.1:{port}/admin")
     os.environ["LIULI_PUBLIC_BASE_URL"] = f"http://127.0.0.1:{port}"
     os.environ["LIULI_DNS_PORT"] = "5353"
     os.environ["LIULI_PUBLIC_IP"] = "127.0.0.1"

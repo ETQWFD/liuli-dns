@@ -34,13 +34,17 @@ def _status(db: Session, user: User) -> RealnameStatusOut:
     s = get_settings()
     sub = _latest(db, user.id)
     instructions = [
-        f"1. 将证件照片发送至 {s.realname_inbox}，邮件标题填写用户编号 {user.user_no}。",
-        "2. 平台人工审核（非官方权威核验），通常在 1～3 个工作日内完成。",
-        "3. 审核通过后，管理员会生成一次性激活码；激活后实名终身有效。",
-        "4. 证件原图仅用于本次审核，审核完成后由邮箱侧删除，平台数据库不保存原图与完整证件号。",
+        f"1. 在本页复制“我的用户编号”：{user.user_no}。",
+        f"2. 用你的注册邮箱发送邮件到 {s.realname_inbox}，主题写“实名审核 + 你的编号”。",
+        "3. 邮件必须附上身份证正面和反面照片，要求画面清晰、四角完整、文字可辨认；邮件正文也必须写上你的用户编号。",
+        "4. 没有附用户编号的邮件无法对应账号，不能为你生成激活码。",
+        "5. 管理员人工审核，通常 1～5 个工作日内答复；审核通过后会收到一次性激活码。",
+        "6. 把激活码粘贴到本页上方的输入框并点击“激活”，系统会真实校验；激活成功后终身有效。",
+        "7. 身份证照片仅用于本次人工审核，审核完成后会删除；平台数据库不保存证件原图，只保留审核状态、审核时间和必要的脱敏记录。平台审核不是官方权威核验。",
     ]
     return RealnameStatusOut(
         status=user.realname_status,
+        user_no=user.user_no,
         activated_at=user.realname_activated_at,
         submitted_at=sub.submitted_at if sub else None,
         reviewed_at=sub.reviewed_at if sub else None,
@@ -56,20 +60,23 @@ def submit(payload: RealnameSubmitIn, request: Request,
     enforce_user(user.id, "realname_submit", 3, 86400)
     if user.realname_status == "active":
         raise AppError(E["REALNAME_INVALID_STATE"], "实名已激活，无需重复提交", 409)
-    if user.realname_status == "pending":
+    if user.realname_status in ("pending", "approved"):
         return ok_(_status(db, user).model_dump(mode="json"))
 
     doc = payload.doc_number.strip()
-    if payload.doc_type == "id_card":
-        if not (15 <= len(doc) <= 18):
+    last4 = payload.doc_last4.strip().upper()[-4:]
+    if doc:
+        if payload.doc_type == "id_card" and not (15 <= len(doc) <= 18):
             raise AppError(E["VALIDATION"], "证件号码长度不合法", 422)
-    elif not (5 <= len(doc) <= 20):
-        raise AppError(E["VALIDATION"], "证件号码长度不合法", 422)
+        if payload.doc_type != "id_card" and not (5 <= len(doc) <= 20):
+            raise AppError(E["VALIDATION"], "证件号码长度不合法", 422)
+        last4 = doc[-4:].upper()
+    hmac_value = hmac_document(doc) if doc else ""
 
     db.add(
         RealnameSubmission(
             user_id=user.id, status="pending", doc_type=payload.doc_type,
-            doc_number_hmac=hmac_document(doc), doc_last4=doc[-4:].upper(),
+            doc_number_hmac=hmac_value, doc_last4=last4,
         )
     )
     user.realname_status = "pending"

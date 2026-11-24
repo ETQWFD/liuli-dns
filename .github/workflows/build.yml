@@ -26,7 +26,7 @@ jobs:
       - run: python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
       - run: packaging/build_macos.sh
         env:
-          VERSION: "0.2.0"
+          VERSION: "0.2.1"
       - uses: actions/upload-artifact@v4
         with:
           name: macos-dmg-unsigned

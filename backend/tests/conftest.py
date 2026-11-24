@@ -75,6 +75,18 @@ class FakeTunnelManager:
     def ensure_user_tunnel(self, db, user):
         return __import__("types").SimpleNamespace(tunnel_id=self.tunnel_id)
 
+    def agent_config(self, db, user):
+        return {
+            "token": "fake-tunnel-token-for-agent-test",
+            "proxy_port": 8787, "control_port": 8788,
+            "warn_connections": 800, "max_connections": 1000,
+            "domains": [{"hostname": "agent.liuli.test",
+                         "upstream": "http://127.0.0.1:9000"}],
+        }
+
+    def agent_heartbeat(self, db, user, payload):
+        return {"ok": True, "received": payload}
+
     def start(self, db, user):
         return self.status(db, user)
 

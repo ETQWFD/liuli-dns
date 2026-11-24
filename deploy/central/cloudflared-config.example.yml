@@ -1,0 +1,13 @@
+# 1) cloudflared tunnel login
+# 2) cloudflared tunnel create liuli-central
+# 3) cloudflared tunnel route dns liuli-central api.asnia.cc
+#    cloudflared tunnel route dns liuli-central admin.asnia.cc
+# 4) copy this file to /etc/cloudflared/config.yml and replace <TUNNEL_ID>
+tunnel: <TUNNEL_ID>
+credentials-file: /etc/cloudflared/<TUNNEL_ID>.json
+ingress:
+  - hostname: api.asnia.cc
+    service: http://127.0.0.1:8000
+  - hostname: admin.asnia.cc
+    service: http://127.0.0.1:8000
+  - service: http_status:404

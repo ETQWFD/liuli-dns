@@ -23,10 +23,19 @@ ApplicationWindow {
     property var expiring: []
     property var tunnel: ({})
     property string platformDomain: "asnia.cc"
+    property string adminUrl: "http://127.0.0.1:8000/admin"
+    property string realnameInbox: "2416444244@qq.com"
     property int selectedDomainId: 0
     property string page: "Dashboard"
     property bool busy: false
     property string bannerText: ""
+
+    Timer {
+        interval: 30000
+        running: app.loggedIn
+        repeat: true
+        onTriggered: app.refreshTunnelStatus()
+    }
 
     readonly property var navItems: [
         { key: "Dashboard", icon: "◈", labelKey: "navDashboard" },
@@ -133,6 +142,8 @@ ApplicationWindow {
                 } else if (action === "meta_public") {
                     var meta = JSON.parse(data || "{}")
                     if (meta.platform_domain) app.platformDomain = meta.platform_domain
+                    if (meta.admin_url) app.adminUrl = meta.admin_url
+                    if (meta.realname_inbox) app.realnameInbox = meta.realname_inbox
                 }
                 return
             }
@@ -422,7 +433,10 @@ ApplicationWindow {
                         width: parent.width - 12
                         horizontalAlignment: Text.AlignHCenter
                         elide: Text.ElideRight
-                        text: app.user.realname_status === "active" ? app.tr.dashRealnameActive : app.tr.dashRealnameNone
+                        text: app.user.realname_status === "active" ? app.tr.dashRealnameActive
+                              : app.user.realname_status === "approved" ? app.tr.realApproved
+                              : app.user.realname_status === "pending" ? app.tr.realPending
+                              : app.tr.dashRealnameNone
                         color: app.user.realname_status === "active" ? "#A8FFEF" : "#FFE7B4"
                         font.pixelSize: 9
                     }

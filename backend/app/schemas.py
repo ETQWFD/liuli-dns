@@ -84,12 +84,17 @@ class SimpleOk(BaseModel):
 
 
 class RealnameSubmitIn(BaseModel):
-    doc_type: Literal["id_card", "passport"]
-    doc_number: str = Field(min_length=6, max_length=40)
+    doc_type: Literal["id_card", "passport"] = "id_card"
+    # Optional: users normally send the ID photos to the human reviewer.
+    # When supplied, only an HMAC of the number and the last four characters
+    # are persisted; the full number and images never enter the database.
+    doc_number: str = Field(default="", max_length=40)
+    doc_last4: str = Field(default="", max_length=4)
 
 
 class RealnameStatusOut(BaseModel):
     status: str
+    user_no: str = ""
     activated_at: datetime | None = None
     submitted_at: datetime | None = None
     reviewed_at: datetime | None = None
@@ -100,6 +105,14 @@ class RealnameStatusOut(BaseModel):
 
 class ActivateIn(BaseModel):
     code: str = Field(min_length=8, max_length=40)
+
+
+class AgentHeartbeatIn(BaseModel):
+    running: bool = False
+    active_connections: int = 0
+    domain_count: int = 0
+    last_error: str = Field(default="", max_length=500)
+    version: str = Field(default="", max_length=32)
 
 
 class DomainCreateIn(BaseModel):

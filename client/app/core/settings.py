@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import os
+import sys
+from pathlib import Path
+
 from PySide6.QtCore import Property, QObject, QSettings, Signal, Slot
 
 
@@ -50,9 +55,27 @@ class AppSettings(QObject):
         self._s.setValue("ui/language", value)
         self.languageChanged.emit()
 
+    def _default_api_base(self) -> str:
+        env = os.environ.get("LIULI_API_BASE", "").strip()
+        if env:
+            return env
+        candidates = []
+        if getattr(sys, "frozen", False):
+            candidates.append(Path(sys.executable).parent / "client-config.json")
+        candidates.append(Path(__file__).resolve().parents[3] / "client-config.json")
+        for path in candidates:
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                value = str(data.get("api_base") or "").strip()
+                if value:
+                    return value
+            except Exception:
+                pass
+        return "http://127.0.0.1:8000/api/v1"
+
     @Property(str, notify=apiBaseChanged)
     def apiBase(self) -> str:
-        return str(self._s.value("server/apiBase", "http://127.0.0.1:8000/api/v1"))
+        return str(self._s.value("server/apiBase", self._default_api_base()))
 
     @apiBase.setter
     def apiBase(self, value: str) -> None:

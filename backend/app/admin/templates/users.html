@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}用户与发码{% endblock %}
+{% block content %}
+{% set status_labels = {'unverified':'未提交实名','pending':'待审核','approved':'已通过待激活','active':'已激活终身有效','rejected':'已驳回'} %}
+{% if msg %}<p class="flash">{{ msg }}</p>{% endif %}
+{% if error %}<p class="flash err">{{ error }}</p>{% endif %}
+
+<h2>用户与激活码</h2>
+<div class="card">
+  <p class="muted" style="margin-top:0">用户注册后把自己的编号复制给你，并按实名页说明把身份证正反面发到 <span class="mono">{{ realname_inbox }}</span>。你核对邮件后在这里标记审核通过，再生成一次性激活码。</p>
+  <form method="get" action="/admin/users" class="row">
+    <input type="text" name="q" value="{{ q }}" placeholder="搜索邮箱或用户编号" style="max-width:360px">
+    <select name="status" style="padding:10px;border-radius:10px;background:rgba(0,0,0,.28);color:#e6f4f8;border:1px solid rgba(160,220,235,.18)">
+      <option value="" {{ 'selected' if not status else '' }}>全部实名状态</option>
+      {% for s in ['unverified','pending','approved','active','rejected'] %}
+      <option value="{{ s }}" {{ 'selected' if status == s else '' }}>{{ status_labels[s] }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">搜索</button>
+    <a class="muted" href="/admin/users">清空</a>
+  </form>
+</div>
+
+<h2>用户列表（最多 100 条）</h2>
+<div class="card">
+  {% if users %}
+  <table>
+    <tr><th>用户编号</th><th>邮箱</th><th>邮箱验证</th><th>实名状态</th><th>注册时间</th><th>操作</th></tr>
+    {% for u in users %}
+    <tr>
+      <td class="mono" id="no-{{ u.id }}">{{ u.user_no }}</td>
+      <td>{{ u.email }}</td>
+      <td>{{ '是' if u.email_verified_at else '否' }}</td>
+      <td><span class="pill {{ 'ok' if u.realname_status == 'active' else ('bad' if u.realname_status == 'rejected' else '') }}">{{ status_labels.get(u.realname_status, u.realname_status) }}</span></td>
+      <td class="muted">{{ u.created_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>
+        <div class="row">
+          <button type="button" class="ghost" onclick="navigator.clipboard.writeText(document.getElementById('no-{{ u.id }}').textContent)">复制编号</button>
+          {% if u.realname_status == 'active' %}
+            <span class="muted">已终身激活</span>
+          {% else %}
+            {% if u.realname_status != 'approved' %}
+              <form method="post" action="/admin/users/{{ u.id }}/approve-offline" style="margin:0" onsubmit="return confirm('确认已在 {{ realname_inbox }} 核对过该用户的身份证正反面，并且邮件里包含用户编号？')">
+                <input type="hidden" name="note" value="邮件人工审核">
+                <button type="submit" class="ghost">标记邮件审核通过</button>
+              </form>
+            {% endif %}
+            {% if u.realname_status == 'approved' and u.id not in unused_by_user %}
+              <form method="post" action="/admin/codes" style="margin:0">
+                <input type="hidden" name="user_no" value="{{ u.user_no }}">
+                <button type="submit">生成激活码</button>
+              </form>
+            {% elif u.id in unused_by_user %}
+              <span class="pill">已签发未使用 #{{ unused_by_user[u.id].id }}</span>
+            {% endif %}
+          {% endif %}
+          {% if u.id in pending_by_user %}
+            <a class="muted" href="/admin/dashboard">待审记录</a>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">没有匹配的用户。</p>{% endif %}
+</div>
+
+<h2>用户操作说明（可复制给用户）</h2>
+<div class="card">
+  <p class="mono" id="user-instructions" style="white-space:pre-wrap">注册后进入“实名信息”页面，先复制“我的用户编号”。把身份证正面和反面拍清楚，连同你的用户编号一起发到 {{ realname_inbox }}。邮件主题写“实名审核 + 你的编号”。管理员人工审核通常需要 1-5 个工作日；审核通过后会给你一次性激活码。拿到激活码后，在实名页上方输入框粘贴并点击“激活”。身份证照片审核完成后会删除，平台不保存原图。</p>
+  <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('user-instructions').textContent)">复制用户说明</button>
+</div>
+{% endblock %}

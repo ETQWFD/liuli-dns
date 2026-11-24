@@ -12,5 +12,12 @@
     <a class="muted" href="/admin/dashboard">返回总览</a>
   </div>
   <p class="muted" style="font-size:12px;margin-top:18px">数据库只保存 HMAC-SHA256 哈希；该码绑定用户编号，使用一次即作废，失败次数超限会临时锁定。用户激活后实名终身有效。</p>
+  <div class="card" style="margin-top:16px;padding:14px">
+    <div class="label">发给用户的话术（可直接复制）</div>
+    <p class="mono" id="message" style="word-break:break-all;white-space:pre-wrap">实名审核已通过。你的用户编号：{{ user.user_no }}
+一次性激活码：{{ code }}
+请打开 LiuliDNS → 实名信息 → 在激活码输入框粘贴后点击“激活”。激活成功后终身有效，激活码只能用一次。</p>
+    <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('message').textContent)">复制发给用户</button>
+  </div>
 </div>
 {% endblock %}

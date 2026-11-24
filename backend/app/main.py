@@ -7,6 +7,7 @@ import logging
 import time
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -58,6 +59,17 @@ def create_app() -> FastAPI:
         token = request_id_ctx.set(rid)
         started = time.perf_counter()
         try:
+            if s.server_role == "control" and request.url.path.startswith("/admin"):
+                host = (request.headers.get("host") or "").split(":")[0].lower()
+                admin_host = (urlsplit(s.admin_public_url).hostname or "").lower()
+                allowed = {"127.0.0.1", "localhost", "::1"}
+                if s.app_env == "test":
+                    allowed.add("testserver")
+                if admin_host:
+                    allowed.add(admin_host)
+                if host not in allowed:
+                    # Keep the public API host from serving the operator UI.
+                    return JSONResponse(status_code=404, content={"detail": "Not Found"})
             if request.url.path.startswith(s.api_prefix) and request.url.path not in (
                 f"{s.api_prefix}/healthz", "/healthz",
             ):

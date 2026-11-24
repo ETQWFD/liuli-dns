@@ -82,6 +82,14 @@ def _migrate_sqlite() -> None:
     if not url.startswith("sqlite"):
         return
     additions = {
+        "user_tunnels": {
+            "agent_last_seen_at": "DATETIME",
+            "agent_running": "BOOLEAN DEFAULT 0",
+            "agent_active_connections": "INTEGER DEFAULT 0",
+            "agent_domain_count": "INTEGER DEFAULT 0",
+            "agent_error": "VARCHAR(500)",
+            "agent_version": "VARCHAR(32)",
+        },
         "domains": {
             "kind": "VARCHAR(16) DEFAULT 'external'",
             "stage": "VARCHAR(24) DEFAULT 'pending'",

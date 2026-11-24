@@ -5,7 +5,13 @@
 <div class="auth">
   <div class="card">
     <h1 style="font-size:20px;margin:0 0 6px">管理员登录</h1>
-    <p class="muted" style="margin:0 0 18px">第一步：静态密码。下一步需要 TOTP 动态口令。</p>
+    <p class="muted" style="margin:0 0 12px">第一步：静态密码。下一步需要 TOTP 动态口令。</p>
+    <div class="card" style="margin:0 0 16px;padding:12px;background:rgba(87,224,200,.06)">
+      <div class="label">后台地址</div>
+      <p class="mono" style="margin:4px 0 0;word-break:break-all">{{ admin_url }}</p>
+      <div class="label" style="margin-top:10px">身份证审核邮箱</div>
+      <p class="mono" style="margin:4px 0 0;word-break:break-all">{{ realname_inbox }}</p>
+    </div>
     {% if not configured %}
       <p class="flash err">后台未配置。请设置 LIULI_ADMIN_PASSWORD_HASH 与 LIULI_ADMIN_TOTP_SECRET 后重启服务。</p>
     {% endif %}

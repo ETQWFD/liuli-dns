@@ -49,6 +49,14 @@ class UserTunnel(Base):
     tunnel_name: Mapped[str] = mapped_column(String(128))
     token_cipher: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(16), default="stopped")
+    # Control-plane mode: the desktop agent owns cloudflared. These fields
+    # are reported by that agent, never assumed by the central server.
+    agent_last_seen_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    agent_running: Mapped[bool] = mapped_column(Boolean, default=False)
+    agent_active_connections: Mapped[int] = mapped_column(Integer, default=0)
+    agent_domain_count: Mapped[int] = mapped_column(Integer, default=0)
+    agent_error: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    agent_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 

@@ -105,16 +105,16 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
 
     existing = db.scalar(select(User).where(User.email == email))
     if existing is not None:
-        if s.local_mode:
-            # Local single-user mode may skip SMTP, but it MUST NOT silently
-            # grant real-name status. The account still has to submit
-            # documents and receive an administrator-issued activation code.
+        if s.local_mode or s.auto_verify_email:
+            # Local/small-platform mode may skip SMTP, but it MUST NOT
+            # silently grant real-name status. The account still has to
+            # submit documents and receive an administrator-issued code.
             existing.email_verified_at = existing.email_verified_at or utcnow()
             db.commit()
             return ok_({
                 "message": "本机模式：邮箱已验证；实名仍需人工审核和激活码，请提交实名材料",
                 "email_verified": True,
-                "local_mode": True,
+                "local_mode": s.local_mode,
                 "realname_status": existing.realname_status,
             })
         if existing.email_verified_at is None:
@@ -131,8 +131,8 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
         password_hash=hash_password(payload.password),
         locale=payload.locale if payload.locale in ("zh_CN", "en_US", "zh_TW") else "zh_CN",
     )
-    if s.local_mode:
-        # Only the email step is local-friendly. Real-name remains unverified
+    if s.local_mode or s.auto_verify_email:
+        # Only the email step is auto-friendly. Real-name remains unverified
         # by default and requires a human-reviewed, one-time activation code.
         user.email_verified_at = utcnow()
     db.add(user)
@@ -145,11 +145,11 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
         ip_hash=ip_hash_of(request), detail={"locale": user.locale},
     )
     db.commit()
-    if s.local_mode:
+    if s.local_mode or s.auto_verify_email:
         return ok_({
-            "message": "本机模式：注册成功、邮箱已验证；请完成实名审核并输入激活码后再创建域名",
+            "message": "注册成功、邮箱已标记验证；请完成实名审核并输入激活码后再创建域名",
             "email_verified": True,
-            "local_mode": True,
+            "local_mode": s.local_mode,
             "realname_status": user.realname_status,
         })
     return ok_(SimpleOk(message="注册成功，请查收邮箱验证码").model_dump())

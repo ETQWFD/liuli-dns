@@ -24,6 +24,7 @@ from .core.localserver import LocalLab
 from .core.netutil import add_firewall_rule, port_available, validate_port
 from .core.settings import AppSettings
 from .core.tokens import TokenStore
+from .core.tunnelagent import TunnelAgent
 
 log = logging.getLogger("liuli.bridge")
 GITHUB_URL = "https://github.com/liuli-dns/liuli-dns-client"
@@ -129,6 +130,7 @@ class Bridge(QObject):
         self._demo_versions: dict[int, list[int]] = {1: [4, 3, 2, 1], 3: [1]}
         self._lab: LocalLab | None = None
         self._lab_port = 0
+        self.agent = TunnelAgent(settings)
         self._busy = 0
 
         self._refresh_timer = QTimer(self)
@@ -186,6 +188,7 @@ class Bridge(QObject):
     @Slot()
     def shutdown(self) -> None:
         self._stop_lab()
+        self.agent.stop()
 
     # ---------- generic API ----------
     @Slot(str, str, str, str)
@@ -245,6 +248,13 @@ class Bridge(QObject):
             self._clear_session(silent=True)
         elif not ok and code == "NETWORK_ERROR":
             self.serverWarning.emit("网络不可达，请检查服务端地址")
+        if ok and action in (
+            "domain_create", "domain_verify", "domain_delete", "upstream_save",
+            "tunnel_start", "realname_activate",
+        ):
+            # Control-plane deployments: the desktop agent must pull the new
+            # hostname map / token. In standalone mode this is a no-op.
+            QTimer.singleShot(700, self.agent.sync)
         self.apiResult.emit(action, ok, json.dumps(data, ensure_ascii=False) if ok else "", code, msg)
         self._reap_workers()
 
@@ -265,6 +275,7 @@ class Bridge(QObject):
         self._user = user
         self._logged = True
         self.tokens.save(refresh, str(user.get("email", "")))
+        self.agent.set_session(self.settings.apiBase, self._access)
         self._emit_auth()
         if not self._refresh_timer.isActive():
             self._refresh_timer.start()
@@ -280,6 +291,7 @@ class Bridge(QObject):
         self._user = {}
         self._logged = False
         self._refresh_timer.stop()
+        self.agent.clear_session()
         self.tokens.clear()
         self._emit_auth()
         if not silent:
@@ -537,13 +549,16 @@ class Bridge(QObject):
                  "days_left": 12, "not_after": "2026-12-05T00:00:00", "status": "active"},
             ]}
         elif action == "realname_status":
-            result = {"status": "active", "activated_at": "2026-11-01T09:00:00",
+            result = {"status": "approved", "user_no": "U-2026-7K3M9Q",
                       "instructions": [
-                          "1. 将证件照片发送至 realname@liuli.example，标题填写用户编号。",
-                          "2. 平台人工审核（非官方权威核验），通常 1～3 个工作日。",
-                          "3. 审核通过后由管理员发放一次性激活码，激活后终身有效。",
-                          "4. 原图审核后删除，数据库只保留 HMAC 与尾号。",
-                      ], "inbox": "realname@liuli.example"}
+                          "1. 在本页复制“我的用户编号”：U-2026-7K3M9Q。",
+                          "2. 用注册邮箱发送邮件到 2416444244@qq.com，主题写“实名审核 + 你的编号”。",
+                          "3. 邮件附身份证正面和反面清晰照片，正文也写上用户编号。",
+                          "4. 管理员人工审核 1～5 个工作日；通过后发放一次性激活码。",
+                          "5. 激活码粘贴到本页上方输入框并点击“激活”，成功后可终身使用。",
+                          "6. 身份证照片仅用于本次审核，审核完成后删除；数据库不保留证件原图，只保留状态、时间和必要脱敏记录。",
+                          "7. 平台人工审核，非官方权威核验。",
+                      ], "inbox": "2416444244@qq.com"}
         elif action == "tools_dns":
             result = {"name": "liuli.studio", "type": "A", "answers": ["203.0.113.10"], "count": 1}
         elif action == "tools_port":
@@ -616,8 +631,8 @@ def _demo_version(domains: list[dict], did: int) -> int:
 def _demo_user() -> dict:
     return {
         "id": 1024, "user_no": "U-2026-7K3M9Q", "email": "studio@liuli.dev",
-        "email_verified": True, "realname_status": "active",
-        "realname_activated_at": "2026-11-01T09:00:00", "created_at": "2026-10-20T11:30:00",
+        "email_verified": True, "realname_status": "approved",
+        "realname_activated_at": None, "created_at": "2026-10-20T11:30:00",
     }
 
 

@@ -23,7 +23,7 @@ from sqlalchemy.orm import Session
 from ..config import get_settings
 from ..errors import AppError, E
 from ..models import Domain, User, UserTunnel
-from ..security import decrypt_secret, encrypt_secret
+from ..security import decrypt_secret, encrypt_secret, utcnow
 from .cloudflare import CloudflareClient, CloudflareError
 
 log = logging.getLogger("liuli.tunnel")
@@ -50,6 +50,10 @@ class TunnelManager:
         self.state_dir = Path(s.tunnel_state_dir).expanduser() if s.tunnel_state_dir else _fallback_state_dir()
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self._proc: subprocess.Popen | None = None
+
+    @property
+    def remote_control(self) -> bool:
+        return self.settings.server_role == "control"
 
     # ---- filesystem / binaries ----
     def binary(self) -> Path | None:
@@ -121,6 +125,30 @@ class TunnelManager:
 
     def status(self, db: Session, user: User) -> dict:
         row = db.scalar(select(UserTunnel).where(UserTunnel.user_id == user.id))
+        if self.remote_control:
+            fresh = bool(
+                row and row.agent_last_seen_at
+                and (utcnow() - row.agent_last_seen_at).total_seconds()
+                <= self.settings.agent_stale_seconds
+            )
+            running = bool(row and row.agent_running and fresh)
+            return {
+                "configured": bool(row),
+                "running": running,
+                "tunnel_id": row.tunnel_id if row else None,
+                "active_connections": int(row.agent_active_connections or 0) if row else 0,
+                "warn_connections": self.settings.tunnel_warn_connections,
+                "max_connections": self.settings.tunnel_max_connections,
+                "warning": bool(
+                    row and row.agent_active_connections >= self.settings.tunnel_warn_connections
+                ),
+                "domain_count": int(row.agent_domain_count or 0) if row else 0,
+                "last_error": (
+                    (row.agent_error if row and row.agent_error else
+                     ("本机隧道代理尚未连接" if row else "尚未创建 Tunnel"))
+                ),
+                "agent_last_seen_at": row.agent_last_seen_at.isoformat() if row and row.agent_last_seen_at else None,
+            }
         live = self._http_status()
         if live:
             live["configured"] = bool(live.get("configured") and row)
@@ -212,6 +240,8 @@ class TunnelManager:
         if row is None:
             raise AppError(E["TUNNEL_UNAVAILABLE"],
                            "域名暂不可用：尚未创建 Tunnel", 503)
+        if self.remote_control:
+            return self.status(db, user)
         live = self._http_status()
         if live.get("ok") or live.get("running"):
             self._write_token(row)
@@ -265,11 +295,17 @@ class TunnelManager:
         row = db.scalar(select(UserTunnel).where(UserTunnel.user_id == user.id))
         if row is None:
             return
+        if self.remote_control:
+            return
         self._write_token(row)
         self._write_domains(db, user)
         self._call_reload()
 
     def ensure_running(self, db: Session, user: User) -> None:
+        if self.remote_control:
+            # The desktop agent reports its own state via heartbeat. The
+            # control plane still configured DNS/ingress for the hostname.
+            return
         status = self.start(db, user)
         if not status.get("running"):
             raise AppError(
@@ -289,6 +325,51 @@ class TunnelManager:
             )
         except CloudflareError as exc:
             raise AppError(exc.code, exc.message, exc.status, exc.details) from exc
+
+    def agent_config(self, db: Session, user: User) -> dict:
+        """Return the per-user tunnel token and hostname map to the desktop agent.
+
+        This is only meaningful in control-plane deployments. The Cloudflare
+        API token never appears here; the user receives only their own Tunnel
+        token, which they could already obtain from Cloudflare.
+        """
+        row = db.scalar(select(UserTunnel).where(UserTunnel.user_id == user.id))
+        if row is None:
+            raise AppError(E["TUNNEL_UNAVAILABLE"], "尚未创建 Tunnel，请先在域名页启动隧道", 409)
+        domains = [
+            {"hostname": d.fqdn, "upstream": d.upstream_url}
+            for d in db.scalars(
+                select(Domain).where(
+                    Domain.user_id == user.id,
+                    Domain.status.in_(("active", "tunnel_pending")),
+                )
+            ).all()
+            if d.upstream_url
+        ]
+        return {
+            "configured": True,
+            "tunnel_id": row.tunnel_id,
+            "token": decrypt_secret(row.token_cipher),
+            "proxy_port": self.settings.tunnel_proxy_port,
+            "control_port": self.settings.tunnel_control_port,
+            "warn_connections": self.settings.tunnel_warn_connections,
+            "max_connections": self.settings.tunnel_max_connections,
+            "domains": domains,
+        }
+
+    def agent_heartbeat(self, db: Session, user: User, payload: dict) -> dict:
+        row = db.scalar(select(UserTunnel).where(UserTunnel.user_id == user.id))
+        if row is None:
+            raise AppError(E["TUNNEL_UNAVAILABLE"], "尚未创建 Tunnel", 409)
+        row.agent_last_seen_at = utcnow()
+        row.agent_running = bool(payload.get("running"))
+        row.agent_active_connections = max(0, int(payload.get("active_connections") or 0))
+        row.agent_domain_count = max(0, int(payload.get("domain_count") or 0))
+        row.agent_error = (str(payload.get("last_error") or "")[:500] or None)
+        row.agent_version = (str(payload.get("version") or "")[:32] or None)
+        row.status = "running" if row.agent_running else "stopped"
+        db.commit()
+        return self.status(db, user)
 
     def stop(self) -> None:
         try:

@@ -2,7 +2,7 @@
 
 LiuliDNS is a desktop domain console for **Cloudflare Tunnel-only** hosting. It supports platform-owned `*.asnia.cc` subdomains and importing external domains whose NS delegation is moved to Cloudflare. It deliberately does **not** register paid apex domains and does not expose a public IPv4 origin.
 
-Version: **0.2.0**. License: AGPL-3.0 (see `LICENSE`); client artwork and brand assets are covered by `LICENSE-CLIENT`.
+Version: **0.2.1**. License: AGPL-3.0 (see `LICENSE`); client artwork and brand assets are covered by `LICENSE-CLIENT`.
 
 ## What is implemented
 
@@ -56,7 +56,40 @@ LIULI_CODE_PEPPER=dev-code LIULI_DOC_PEPPER=dev-doc \
 ../.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-The desktop client starts `server_entry.py` automatically for a loopback API base. On first standalone start it creates `admin-credentials.txt` (mode 0600) under the user data directory; the operator logs in at `/admin`, reviews the submission and issues the activation code. This is a human review step, not automatic approval.
+## 后台地址、用户编号与激活码
+
+### 单机版（只审核本机账号）
+
+客户端只连接本机 API 时，后台地址固定为：
+
+```
+http://127.0.0.1:8000/admin
+```
+
+第一次启动会在本机数据目录生成管理员凭据（0600）：
+
+- Windows：`%LOCALAPPDATA%\LiuliDNS\server\admin-credentials.txt`
+- Linux：`~/.local/share/liuli-dns/server/admin-credentials.txt`
+
+文件里有后台 URL、管理员密码和 TOTP 密钥。这个后台只读取本机数据库，**不能审核其他电脑上的用户**。
+
+### 正式多人版（给其他用户发激活码）
+
+必须把 `deploy/central` 部署到一台有公网入口的服务器，并用 Cloudflare Tunnel 暴露：
+
+- 客户端 API：`https://api.asnia.cc/api/v1`
+- 运营后台：`https://admin.asnia.cc/admin`
+
+部署步骤见 `deploy/central/README.md`。没有服务器和 Cloudflare API Token 时，这两个地址不会凭空存在，软件也不会伪造成功。
+
+### 用户侧流程
+
+1. 用户注册并登录，打开“实名信息”。
+2. 页面显示“我的用户编号”，用户点击复制；激活码输入框就在编号上方。
+3. 用户把身份证正面、反面拍清晰，连同用户编号一起发到 `2416444244@qq.com`；邮件主题写“实名审核 + 编号”。不发编号无法对应账号。
+4. 管理员登录后台，在“用户与发码”按编号或邮箱搜索用户，核对邮件后点“标记邮件审核通过”，再点“生成激活码”。
+5. 用户把一次性激活码粘贴到实名页上方输入框，点“激活”。服务端真实校验 HMAC、绑定用户、状态、失败次数和是否已用；成功后实名终身有效。
+6. 身份证照片只用于本次人工审核，审核后删除；数据库不保留证件原图，只保留审核状态、审核时间和必要的脱敏记录。平台审核不是官方权威核验。
 
 ## Cloudflare Tunnel setup (server side)
 

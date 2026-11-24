@@ -4,6 +4,20 @@
 {% if msg %}<p class="flash">{{ msg }}</p>{% endif %}
 {% if error %}<p class="flash err">{{ error }}</p>{% endif %}
 
+<div class="card" style="margin-bottom:18px">
+  <div class="row" style="justify-content:space-between">
+    <div>
+      <div class="label">后台地址</div>
+      <p class="mono" style="margin:4px 0 0;word-break:break-all">{{ admin_url }}</p>
+    </div>
+    <div>
+      <div class="label">实名审核邮箱</div>
+      <p class="mono" style="margin:4px 0 0">{{ realname_inbox }}</p>
+    </div>
+    <div><a href="/admin/users" style="color:var(--accent)">用户与发码 →</a></div>
+  </div>
+</div>
+
 <div class="grid">
   <div class="card"><div class="label">用户</div><div class="kpi">{{ counts.users }}</div></div>
   <div class="card"><div class="label">域名</div><div class="kpi">{{ counts.domains }}</div></div>
@@ -21,7 +35,7 @@
       <td class="mono">{{ user.user_no }}</td>
       <td>{{ user.email }}</td>
       <td>{{ sub.doc_type }}</td>
-      <td class="mono">****{{ sub.doc_last4 }}</td>
+      <td class="mono">{{ ('****' + sub.doc_last4) if sub.doc_last4 else '仅邮件审核' }}</td>
       <td class="muted">{{ sub.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
       <td>
         <form method="post" action="/admin/realname/{{ sub.id }}/review" class="row" style="margin:0">

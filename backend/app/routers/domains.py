@@ -23,8 +23,8 @@ from ..models import Certificate, Domain, User, UserTunnel, ZoneRevision
 from ..ratelimit import enforce_user
 from ..respond import ok_
 from ..schemas import (
-    DomainCreateIn, DomainOut, ExternalDomainIn, FreeDomainIn, PlatformDomainIn,
-    SimpleOk, UpstreamIn,
+    AgentHeartbeatIn, DomainCreateIn, DomainOut, ExternalDomainIn, FreeDomainIn,
+    PlatformDomainIn, SimpleOk, UpstreamIn,
 )
 from ..security import utcnow
 from ..services import dnszone
@@ -150,6 +150,19 @@ def tunnel_start(user: User = Depends(require_realname), db: Session = Depends(g
         db.rollback()
         raise _decorate_error(exc) from exc
     return ok_(_tunnel().status(db, user))
+
+
+@router.get("/agent/config")
+def agent_config(user: User = Depends(require_realname), db: Session = Depends(get_db)):
+    """Desktop tunnel agent pulls its own token and hostname map here."""
+    return ok_(_tunnel().agent_config(db, user))
+
+
+@router.post("/agent/heartbeat")
+def agent_heartbeat(payload: AgentHeartbeatIn,
+                    user: User = Depends(require_realname), db: Session = Depends(get_db)):
+    """Desktop agent reports real process state; the server never invents it."""
+    return ok_(_tunnel().agent_heartbeat(db, user, payload.model_dump()))
 
 
 @router.post("/platform")

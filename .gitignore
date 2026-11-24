@@ -25,3 +25,7 @@ backend/data/
 *.dmg
 *.whl
 .DS_Store
+deploy/central/central.env
+deploy/central/data/
+deploy/central/*.db
+deploy/central/outbox/
