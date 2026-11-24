@@ -1,0 +1,6 @@
+{
+  "domains": [
+    {"hostname": "abc.asnia.cc", "upstream": "http://127.0.0.1:8080"},
+    {"hostname": "www.example.com", "upstream": "http://127.0.0.1:9000"}
+  ]
+}

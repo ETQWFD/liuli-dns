@@ -1,0 +1,11 @@
+{
+  "cloudflared": "/usr/local/bin/cloudflared",
+  "token_file": "/home/user/.local/share/liuli-dns/server/tunnel/tunnel-token",
+  "proxy_listen": "127.0.0.1:8787",
+  "control_listen": "127.0.0.1:8788",
+  "domains_file": "/home/user/.local/share/liuli-dns/server/tunnel/domains.json",
+  "state_dir": "/home/user/.local/share/liuli-dns/server/tunnel",
+  "warn_connections": 800,
+  "max_connections": 1000,
+  "restart_limit": 20
+}

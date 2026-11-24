@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}激活码{% endblock %}
+{% block content %}
+<div class="card" style="max-width:640px;margin:40px auto">
+  <p class="flash">请立即通过安全渠道发送给用户。关闭此页后无法再次查看明文。</p>
+  <div class="label">用户</div>
+  <p class="mono">{{ user.user_no }} · {{ user.email }}</p>
+  <div class="label">一次性实名激活码</div>
+  <div class="bigcode" id="code">{{ code }}</div>
+  <div class="row">
+    <button onclick="navigator.clipboard.writeText(document.getElementById('code').textContent)">复制激活码</button>
+    <a class="muted" href="/admin/dashboard">返回总览</a>
+  </div>
+  <p class="muted" style="font-size:12px;margin-top:18px">数据库只保存 HMAC-SHA256 哈希；该码绑定用户编号，使用一次即作废，失败次数超限会临时锁定。用户激活后实名终身有效。</p>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}总览{% endblock %}
+{% block content %}
+{% if msg %}<p class="flash">{{ msg }}</p>{% endif %}
+{% if error %}<p class="flash err">{{ error }}</p>{% endif %}
+
+<div class="grid">
+  <div class="card"><div class="label">用户</div><div class="kpi">{{ counts.users }}</div></div>
+  <div class="card"><div class="label">域名</div><div class="kpi">{{ counts.domains }}</div></div>
+  <div class="card"><div class="label">生效证书</div><div class="kpi">{{ counts.certs }}</div></div>
+  <div class="card"><div class="label">待审实名</div><div class="kpi">{{ counts.pending }}</div></div>
+</div>
+
+<h2>待审实名</h2>
+<div class="card">
+  {% if pending %}
+  <table>
+    <tr><th>用户编号</th><th>邮箱</th><th>证件类型</th><th>尾号</th><th>提交时间</th><th>操作</th></tr>
+    {% for sub, user in pending %}
+    <tr>
+      <td class="mono">{{ user.user_no }}</td>
+      <td>{{ user.email }}</td>
+      <td>{{ sub.doc_type }}</td>
+      <td class="mono">****{{ sub.doc_last4 }}</td>
+      <td class="muted">{{ sub.submitted_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td>
+        <form method="post" action="/admin/realname/{{ sub.id }}/review" class="row" style="margin:0">
+          <input type="text" name="reason" placeholder="驳回原因（可选）" style="width:150px">
+          <button name="decision" value="approve" type="submit">通过</button>
+          <button name="decision" value="reject" type="submit" class="danger">驳回</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p class="muted">暂无待审材料。证件原图由指定邮箱接收，审核后删除；此处只显示 HMAC 与尾号。</p>{% endif %}
+</div>
+
+<h2>生成一次性激活码</h2>
+<div class="card">
+  <form method="post" action="/admin/codes" class="row">
+    <input type="text" name="user_no" placeholder="用户编号，如 U-2026-ABC123" required style="max-width:320px">
+    <button type="submit">生成激活码</button>
+    <span class="muted">仅当实名审核状态为 approved 时可生成；明文只显示一次。</span>
+  </form>
+</div>
+
+<h2>最近激活码</h2>
+<div class="card">
+  <table>
+    <tr><th>ID</th><th>用户编号</th><th>状态</th><th>失败</th><th>签发</th><th>操作</th></tr>
+    {% for c in codes %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td class="mono">{{ c.user_no }}</td>
+      <td><span class="pill {{ 'ok' if c.status == 'unused' else ('bad' if c.status == 'revoked' else '') }}">{{ c.status }}</span></td>
+      <td>{{ c.attempts }}/{{ c.max_attempts }}</td>
+      <td class="muted">{{ c.issued_at.strftime("%Y-%m-%d %H:%M") }}</td>
+      <td class="row">
+        {% if c.status == 'unused' %}
+        <form method="post" action="/admin/codes/{{ c.id }}/reset-attempts" style="margin:0"><button class="ghost" type="submit">重置失败次数</button></form>
+        <form method="post" action="/admin/codes/{{ c.id }}/revoke" style="margin:0"><button class="danger" type="submit">吊销</button></form>
+        {% else %}<span class="muted">—</span>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+</div>
+
+<h2>证书到期</h2>
+<div class="card">
+  {% if expiring %}
+  <table><tr><th>域名</th><th>到期时间</th><th>剩余</th></tr>
+  {% for x in expiring %}<tr><td>{{ x.domain }}</td><td>{{ x.not_after.strftime("%Y-%m-%d") }}</td><td>{{ x.days }} 天</td></tr>{% endfor %}
+  </table>
+  {% else %}<p class="muted">暂无生效证书。</p>{% endif %}
+</div>
+
+<h2>最近用户</h2>
+<div class="card">
+  <table><tr><th>ID</th><th>用户编号</th><th>邮箱</th><th>实名</th><th>注册</th></tr>
+  {% for u in users %}<tr><td>{{ u.id }}</td><td class="mono">{{ u.user_no }}</td><td>{{ u.email }}</td><td>{{ u.realname_status }}</td><td class="muted">{{ u.created_at.strftime("%Y-%m-%d") }}</td></tr>{% endfor %}
+  </table>
+</div>
+
+<h2>最近审计</h2>
+<div class="card">
+  <table><tr><th>时间</th><th>角色</th><th>动作</th><th>目标</th></tr>
+  {% for a in audit %}<tr><td class="muted">{{ a.created_at.strftime("%Y-%m-%d %H:%M") }}</td><td>{{ a.actor_type }}</td><td class="mono">{{ a.action }}</td><td>{{ a.target or "-" }}</td></tr>{% endfor %}
+  </table>
+  <p><a href="/admin/audit" style="color:var(--accent)">查看完整审计日志 →</a></p>
+</div>
+{% endblock %}

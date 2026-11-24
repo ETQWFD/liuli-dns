@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+RUN groupadd --system liuli && useradd --system --gid liuli --home /app liuli
+WORKDIR /app
+COPY backend/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY backend/app /app/app
+RUN mkdir -p /app/data && chown -R liuli:liuli /app
+
+USER liuli
+EXPOSE 5353/udp
+EXPOSE 5353/tcp
+
+# The container listens on 5353 as a non-root user; docker-compose maps host
+# port 53 -> 5353.  This authoritative server never performs recursion.
+CMD ["python", "-m", "app.dns.server", "--host", "0.0.0.0", "--port", "5353"]

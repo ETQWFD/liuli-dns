@@ -1,0 +1,13 @@
+# Reference only. LiuliDNS normally pushes ingress rules through the
+# Cloudflare API and runs cloudflared with TUNNEL_TOKEN, so this file is not
+# required for the shipping client. Use it only for a developer's manual,
+# local named-tunnel validation.
+tunnel: REPLACE_WITH_TUNNEL_ID
+credentials-file: /absolute/path/to/REPLACE_WITH_TUNNEL_CREDENTIALS.json
+
+ingress:
+  - hostname: abc.asnia.cc
+    service: http://127.0.0.1:8787
+  - hostname: www.example.com
+    service: http://127.0.0.1:8787
+  - service: http_status:404

@@ -1,0 +1,64 @@
+# LiuliDNS production compose.  Copy .env.example to .env and fill secrets
+# on the server; never commit .env.  DNS must be reachable on UDP+TCP 53.
+#
+#   docker compose up -d --build
+#   docker compose logs -f api dns
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: liuli
+      POSTGRES_USER: liuli
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U liuli -d liuli"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [liuli]
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LIULI_APP_ENV: prod
+      LIULI_DATABASE_URL: postgresql+psycopg://liuli:${POSTGRES_PASSWORD}@db:5432/liuli
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [liuli]
+
+  dns:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.dns
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      LIULI_APP_ENV: prod
+      LIULI_DATABASE_URL: postgresql+psycopg://liuli:${POSTGRES_PASSWORD}@db:5432/liuli
+      LIULI_DNS_HOST: 0.0.0.0
+      LIULI_DNS_PORT: 5353
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "53:5353/udp"
+      - "53:5353/tcp"
+    networks: [liuli]
+
+volumes:
+  pgdata:
+
+networks:
+  liuli:
+    driver: bridge

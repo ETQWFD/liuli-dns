@@ -1,0 +1,25 @@
+[Unit]
+Description=LiuliDNS FastAPI service
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=liuli
+Group=liuli
+WorkingDirectory=/opt/liuli-dns/backend
+EnvironmentFile=/etc/liuli/liuli.env
+ExecStart=/opt/liuli-dns/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/liuli /var/log/liuli
+RuntimeDirectory=liuli
+CapabilityBoundingSet=
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target
