@@ -1,0 +1,33 @@
+name: build
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: sudo apt-get update && sudo apt-get install -y libxcb-cursor0 nsis
+      - run: python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
+      - run: .venv/bin/python packaging/build_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-deb
+          path: release/*.deb
+  macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: python3 -m venv .venv && .venv/bin/pip install -r backend/requirements.txt
+      - run: packaging/build_macos.sh
+        env:
+          VERSION: "0.2.0"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg-unsigned
+          path: release/*.dmg
