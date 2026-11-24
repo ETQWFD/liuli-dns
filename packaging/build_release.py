@@ -466,7 +466,7 @@ def main():
     files = [deb, exe, portable]
     lines = []
     for f in files:
-        h = subprocess.check_output(["sha256sum", str(f)], text=True)
+        h = subprocess.check_output(["sha256sum", f.name], cwd=str(RELEASE), text=True)
         lines.append(h.strip())
     sums.write_text("\n".join(lines) + "\n", encoding="utf-8")
     log("DONE")
