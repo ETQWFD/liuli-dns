@@ -27,7 +27,7 @@ from .core.tokens import TokenStore
 from .core.tunnelagent import TunnelAgent
 
 log = logging.getLogger("liuli.bridge")
-GITHUB_URL = "https://github.com/liuli-dns/liuli-dns-client"
+GITHUB_URL = "https://github.com/ETQWFD/liuli-dns"
 MAX_UPLOAD = 96 * 1024
 
 

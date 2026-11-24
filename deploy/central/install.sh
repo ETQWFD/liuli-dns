@@ -21,7 +21,7 @@ python3 -m venv .venv
 if [ ! -f deploy/central/central.env ]; then
   .venv/bin/python deploy/central/bootstrap.py \
     --env-file deploy/central/central.env --data-dir "$DATA_DIR" \
-    --admin-url "${ADMIN_URL:-https://admin.asnia.cc/admin}"
+    --admin-url "${ADMIN_URL:-https://admin.example.com/admin}"
 fi
 chown -R liuli:liuli "$DATA_DIR"
 chown -R root:root "$APP_DIR"

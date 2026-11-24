@@ -1,16 +1,16 @@
 ; LiuliDNS per-user installer (NSIS 3.x / Unicode).
 ; Build after dist\LiuliDNS exists:
-;   makensis /DAPP_VERSION=0.1.0 /DAPP_VERSION4=0.1.0.0 packaging\installer.nsi
+;   makensis /DAPP_VERSION=0.2.2 /DAPP_VERSION4=0.2.2.0 packaging\installer.nsi
 ; Then sign dist\LiuliDNS-Setup-0.1.0.exe on the signing machine.
 
 Unicode true
 !include "MUI2.nsh"
 
 !ifndef APP_VERSION
-  !define APP_VERSION "0.1.0"
+  !define APP_VERSION "0.2.2"
 !endif
 !ifndef APP_VERSION4
-  !define APP_VERSION4 "0.1.0.0"
+  !define APP_VERSION4 "0.2.2.0"
 !endif
 
 !define APP_NAME "LiuliDNS"

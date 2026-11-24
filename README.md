@@ -2,7 +2,7 @@
 
 LiuliDNS is a desktop domain console for **Cloudflare Tunnel-only** hosting. It supports platform-owned `*.asnia.cc` subdomains and importing external domains whose NS delegation is moved to Cloudflare. It deliberately does **not** register paid apex domains and does not expose a public IPv4 origin.
 
-Version: **0.2.1**. License: AGPL-3.0 (see `LICENSE`); client artwork and brand assets are covered by `LICENSE-CLIENT`.
+Version: **0.2.2**. License: AGPL-3.0 (see `LICENSE`); client artwork and brand assets are covered by `LICENSE-CLIENT`.
 
 ## What is implemented
 
@@ -75,12 +75,12 @@ http://127.0.0.1:8000/admin
 
 ### 正式多人版（给其他用户发激活码）
 
-必须把 `deploy/central` 部署到一台有公网入口的服务器，并用 Cloudflare Tunnel 暴露：
+必须把 `deploy/central` 部署到一台有公网入口的服务器，并用 Cloudflare Tunnel 暴露。**后台地址不会显示在客户端界面，也不在 `/meta/public` 返回；只有服务器凭据文件和部署者知道。** 地址为：
 
 - 客户端 API：`https://api.asnia.cc/api/v1`
-- 运营后台：`https://admin.asnia.cc/admin`
+- 运营后台：由部署者私密保存，不写入客户端、README 或公开示例；部署后在服务器 `admin-credentials.txt` 中查看。
 
-部署步骤见 `deploy/central/README.md`。没有服务器和 Cloudflare API Token 时，这两个地址不会凭空存在，软件也不会伪造成功。
+部署步骤见 `deploy/central/README.md`。没有服务器和 Cloudflare API Token 时，这两个地址不会凭空存在，软件也不会伪造成功。当前公网 DNS 把后台域名指向一个不可用的 IPv6 地址（并非本机），所以浏览器会超时；必须由域名所有者把 DNS 改到实际服务器/Cloudflare Tunnel。
 
 ### 用户侧流程
 

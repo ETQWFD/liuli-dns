@@ -25,7 +25,7 @@ from PySide6.QtCore import QObject, QTimer, Signal
 
 log = logging.getLogger("liuli.agent")
 LOCAL_HOSTS = {"127.0.0.1", "localhost", "::1"}
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 
 
 class TunnelAgent(QObject):

@@ -148,3 +148,7 @@ def test_health_and_meta(client):
     data = r.json()["data"]
     assert data["capabilities"]["registrar"] is False
     assert "private" not in str(data).lower()
+    # 后台入口不能通过公开元数据下发给普通客户端。
+    assert "admin_url" not in data
+    assert "admin.asnia.cc" not in str(data)
+    assert data["version"] == "0.2.2"

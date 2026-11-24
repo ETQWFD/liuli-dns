@@ -7,12 +7,14 @@
   它只能审核这台电脑上的账号，不能给其他电脑上的用户发激活码。
 - **正式多人模式**：把本目录的中央后端部署到一台有公网入口的服务器，再用 Cloudflare Tunnel 暴露两个域名：
   - 客户端 API：`https://api.asnia.cc/api/v1`
-  - 运营后台：`https://admin.asnia.cc/admin`
+  - 运营后台：`https://<ADMIN_HOST>/admin`（实际值只写入服务器 0600 凭据，不写入客户端/公开文档）
   这两个地址只有在服务器部署、Tunnel 建立并完成 DNS 路由后才存在。没有服务器和 Cloudflare 凭据时，软件不会伪造一个“可用”的地址。
 
 ## 服务器要求
 
-Ubuntu 22.04/24.04、Python 3.12、systemd；域名 `asnia.cc` 已接入 Cloudflare（当前 NS 已是 Cloudflare）。建议 Cloudflare Access 再给 `admin.asnia.cc` 加一层邮箱/OTP 策略。
+Ubuntu 22.04/24.04、Python 3.12、systemd。**`asnia.cc` 的 NS 已是 Cloudflare（`harlan.ns.cloudflare.com` / `ullis.ns.cloudflare.com`），但当前 `admin.asnia.cc` 的 AAAA 仍指向一个不可用的 `240e:...` 地址，所以浏览器会超时。** 要真正上线，必须拥有该 Cloudflare 账号的授权（`cloudflared tunnel login`，或提供 Zone:Read / DNS:Edit / Account:Cloudflare Tunnel:Edit 的 API Token）；仅在本机部署后端不会自动修复 DNS。
+
+授权后执行 `cloudflared tunnel route dns`；建议 Cloudflare Access 再给后台域名加一层邮箱/OTP 策略。
 
 ## 一、启动中央后端
 
@@ -54,7 +56,7 @@ http://127.0.0.1:8000/admin
 cloudflared tunnel login
 cloudflared tunnel create liuli-central
 cloudflared tunnel route dns liuli-central api.asnia.cc
-cloudflared tunnel route dns liuli-central admin.asnia.cc
+cloudflared tunnel route dns liuli-central "$ADMIN_HOST"
 sudo mkdir -p /etc/cloudflared
 sudo cp deploy/central/cloudflared-config.example.yml /etc/cloudflared/config.yml
 # 编辑 /etc/cloudflared/config.yml，把 <TUNNEL_ID> 换成 create 输出的 UUID
@@ -62,7 +64,7 @@ sudo cloudflared service install
 sudo systemctl enable --now cloudflared
 ```
 
-`/etc/cloudflared/config.yml` 里的两条 ingress 都指向 `http://127.0.0.1:8000`。后台 host 已在服务内部限制：从 `api.asnia.cc` 访问 `/admin` 会返回 404，只有 `admin.asnia.cc` 或本机 loopback 可进入后台。
+`/etc/cloudflared/config.yml` 里的两条 ingress 都指向 `http://127.0.0.1:8000`。后台 host 已在服务内部限制：从 `api.asnia.cc` 访问 `/admin` 会返回 404，只有后台域名或本机 loopback 可进入后台。**后台地址不会出现在客户端界面，也不会通过 `/meta/public` 下发。**
 
 ## 三、填写 Cloudflare API 变量
 
@@ -104,7 +106,7 @@ https://api.asnia.cc/api/v1
 1. 用户在客户端注册并登录。
 2. 打开“实名信息”，复制“我的用户编号”。
 3. 用户把身份证正面、反面清晰照片发到 `2416444244@qq.com`，邮件主题和正文都写用户编号。没有编号无法对应账号。
-4. 管理员登录 `https://admin.asnia.cc/admin`（密码 + TOTP）。
+4. 管理员在自己保存的部署凭据里找到后台地址，登录 `https://<ADMIN_HOST>/admin`（密码 + TOTP）。该地址不显示给普通用户。
 5. 在“用户与发码”搜索用户编号或邮箱；核对邮件后点“标记邮件审核通过”。
 6. 点“生成激活码”，页面显示一次性明文和可直接发给用户的话术。
 7. 用户回到“实名信息”，在编号上方的输入框粘贴激活码并点“激活”。服务端真实校验 HMAC、绑定用户、状态、失败次数和是否已用；成功后终身有效。

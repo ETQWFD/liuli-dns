@@ -34,7 +34,7 @@ Item {
 
     Flickable {
         anchors.fill: parent
-        contentWidth: width
+        contentWidth: width - 10
         contentHeight: content.implicitHeight
         clip: true
         boundsBehavior: Flickable.StopAtBounds
@@ -42,7 +42,7 @@ Item {
 
         ColumnLayout {
             id: content
-            width: parent.width
+            width: parent.width - 10
             spacing: 14
 
             RowLayout {
@@ -53,7 +53,12 @@ Item {
                     Text { text: root.tr.setBoundary; color: uiTheme.muted; font.pixelSize: 10; wrapMode: Text.Wrap; Layout.maximumWidth: 720 }
                 }
                 Item { Layout.fillWidth: true }
-                Text { text: "v" + AppVersion; color: uiTheme.muted; font.pixelSize: 11 }
+                Text {
+                    text: "v" + AppVersion
+                    color: uiTheme.muted
+                    font.pixelSize: 11
+                    Layout.rightMargin: 8
+                }
             }
 
             Item {
@@ -250,62 +255,6 @@ Item {
                     x: parent.width - 420
                     width: 420
                     spacing: 14
-
-                    // ---------- operator backend ----------
-                    GlassCard {
-                        Layout.fillWidth: true
-                        height: 214
-                        pad: 20
-                        ColumnLayout {
-                            anchors.fill: parent
-                            spacing: 8
-                            Text { text: root.tr.adminTitle; color: uiTheme.text; font.pixelSize: 16; font.weight: Font.DemiBold }
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.tr.adminHint
-                                color: uiTheme.muted
-                                font.pixelSize: 9
-                                wrapMode: Text.Wrap
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: (root.appRoot && root.appRoot.adminUrl) ? root.appRoot.adminUrl : ""
-                                color: "#BFF9EF"
-                                font.family: "Consolas"
-                                font.pixelSize: 10
-                                elide: Text.ElideMiddle
-                            }
-                            Text {
-                                Layout.fillWidth: true
-                                text: root.tr.adminEmail + ": " + ((root.appRoot && root.appRoot.realnameInbox) ? root.appRoot.realnameInbox : "2416444244@qq.com")
-                                color: uiTheme.muted
-                                font.pixelSize: 9
-                                elide: Text.ElideMiddle
-                            }
-                            RowLayout {
-                                spacing: 8
-                                AnimatedButton {
-                                    text: root.tr.adminOpen
-                                    small: true
-                                    primary: true
-                                    onClicked: {
-                                        var u = (root.appRoot && root.appRoot.adminUrl) ? root.appRoot.adminUrl : "http://127.0.0.1:8000/admin"
-                                        Bridge.openUrl(u)
-                                    }
-                                }
-                                AnimatedButton {
-                                    text: root.tr.copy
-                                    small: true
-                                    ghost: true
-                                    onClicked: {
-                                        var u = (root.appRoot && root.appRoot.adminUrl) ? root.appRoot.adminUrl : ""
-                                        if (u !== "") Bridge.copyText(u)
-                                    }
-                                }
-                            }
-                            Item { Layout.fillHeight: true }
-                        }
-                    }
 
                     // ---------- GitHub ----------
                     GlassCard {

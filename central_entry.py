@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Run LiuliDNS as a central control plane (accounts, review, DNS/ingress).
 
-Put this behind a Cloudflare Tunnel (for example api.asnia.cc and
-admin.asnia.cc). The desktop client connects to /api/v1; each desktop runs its
+Put this behind a Cloudflare Tunnel (for example api.example.com and
+admin.example.com). The desktop client connects to /api/v1; each desktop runs its
 own local Go tunnel agent because cloudflared must run on the user's network.
 """
 from __future__ import annotations

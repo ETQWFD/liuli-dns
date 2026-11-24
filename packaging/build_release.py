@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the shipping artifacts on Linux:
-  * release/liuli-dns_0.2.1_amd64.deb       (native Linux onedir + dpkg-deb)
-  * release/LiuliDNS-Setup-0.2.1.exe        (Windows installer, embedded CPython + wheels)
-  * release/LiuliDNS-0.2.1-windows-x64-portable.zip
+  * release/liuli-dns_0.2.2_amd64.deb       (native Linux onedir + dpkg-deb)
+  * release/LiuliDNS-Setup-0.2.2.exe        (Windows installer, embedded CPython + wheels)
+  * release/LiuliDNS-0.2.2-windows-x64-portable.zip
 The Windows build deliberately avoids Wine: it ships the official embeddable
 CPython runtime and Windows wheels, plus a tiny native launcher compiled by NSIS.
 """
@@ -24,7 +24,7 @@ BUILD = ROOT / "build-tools"
 RELEASE = ROOT / "release"
 VENV = ROOT / ".venv"
 PY = VENV / "bin" / "python"
-VERSION = "0.2.1"
+VERSION = "0.2.2"
 WIN_STAGE = BUILD / "win-stage"
 WIN_RUNTIME = WIN_STAGE / "runtime"
 WHEELS = BUILD / "wheels-win"

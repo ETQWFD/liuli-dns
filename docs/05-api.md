@@ -48,7 +48,7 @@ X-Idempotency-Key: <UUIDv4>
 | 方法 | 路径 | 鉴权 | 说明 |
 |---|---|---|---|
 | GET | `/meta/version` | 无 | 名称、版本、环境 |
-| GET | `/meta/public` | 无 | 平台域名、NS、实名邮箱、能力边界（`acme_auto=false`） |
+| GET | `/meta/public` | 无 | 平台域名、NS、实名邮箱、能力边界（`acme_auto=false`）；**不返回后台地址** |
 | GET | `/healthz` | 无 | API + DB 健康；返回 `status/db` |
 
 ## 3. 账号

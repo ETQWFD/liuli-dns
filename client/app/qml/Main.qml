@@ -23,7 +23,6 @@ ApplicationWindow {
     property var expiring: []
     property var tunnel: ({})
     property string platformDomain: "asnia.cc"
-    property string adminUrl: "http://127.0.0.1:8000/admin"
     property string realnameInbox: "2416444244@qq.com"
     property int selectedDomainId: 0
     property string page: "Dashboard"
@@ -142,7 +141,6 @@ ApplicationWindow {
                 } else if (action === "meta_public") {
                     var meta = JSON.parse(data || "{}")
                     if (meta.platform_domain) app.platformDomain = meta.platform_domain
-                    if (meta.admin_url) app.adminUrl = meta.admin_url
                     if (meta.realname_inbox) app.realnameInbox = meta.realname_inbox
                 }
                 return

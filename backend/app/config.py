@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     app_env: Literal["dev", "test", "prod"] = "dev"
     app_name: str = "LiuliDNS"
-    app_version: str = "0.2.1"
+    app_version: str = "0.2.2"
     api_prefix: str = "/api/v1"
     # Standalone desktop mode: the client starts this API locally. It keeps
     # mail optional for a one-person install, but it MUST NOT bypass real-name

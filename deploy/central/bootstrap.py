@@ -23,7 +23,7 @@ def main() -> int:
     ap.add_argument("--env-file", default=str(Path(__file__).parent / "central.env"))
     ap.add_argument("--data-dir", default=str(Path(__file__).parent / "data"))
     ap.add_argument("--email", default="2416444244@qq.com")
-    ap.add_argument("--admin-url", default="https://admin.asnia.cc/admin")
+    ap.add_argument("--admin-url", default="https://admin.example.com/admin")
     ap.add_argument("--api-url", default="https://api.asnia.cc")
     ap.add_argument("--password", default="")
     args = ap.parse_args()

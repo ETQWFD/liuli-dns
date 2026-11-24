@@ -9,7 +9,7 @@ BUILD="$ROOT/build-tools"
 REL="$ROOT/release"
 VENV="${VENV:-$ROOT/.venv}"
 PY="$VENV/bin/python"
-VERSION="${VERSION:-0.2.1}"
+VERSION="${VERSION:-0.2.2}"
 mkdir -p "$BUILD/tunnel-dist" "$REL"
 
 cd "$ROOT/tunnel"

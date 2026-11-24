@@ -34,7 +34,6 @@ def public_config():
         "platform_domain": s.platform_domain,
         "nameservers": s.nameserver_list,
         "realname_inbox": s.realname_inbox,
-        "admin_url": s.admin_public_url,
         "capabilities": {
             "registrar": False,
             "dns_records": ["A", "AAAA", "CNAME", "TXT", "MX", "NS", "SRV", "CAA"],
